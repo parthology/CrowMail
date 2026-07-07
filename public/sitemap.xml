@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap-0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://crowmail.sbs/en</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://crowmail.sbs/en"/>
+    <xhtml:link rel="alternate" hreflang="hi" href="https://crowmail.sbs/hi"/>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://crowmail.sbs/hi</loc>
+    <xhtml:link rel="alternate" hreflang="hi" href="https://crowmail.sbs/hi"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://crowmail.sbs/en"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url><loc>https://crowmail.sbs/en/api-docs</loc><priority>0.7</priority></url>
+  <url><loc>https://crowmail.sbs/en/faq</loc><priority>0.7</priority></url>
+  <url><loc>https://crowmail.sbs/en/privacy</loc><priority>0.5</priority></url>
+  <url><loc>https://crowmail.sbs/hi/api-docs</loc><priority>0.7</priority></url>
+  <url><loc>https://crowmail.sbs/hi/faq</loc><priority>0.7</priority></url>
+  <url><loc>https://crowmail.sbs/hi/privacy</loc><priority>0.5</priority></url>
+</urlset>
