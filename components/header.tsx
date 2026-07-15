@@ -4,13 +4,14 @@ import { Button } from "@heroui/button"
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from "@heroui/dropdown"
 import { Avatar } from "@heroui/avatar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Sun, Moon, Languages, User, UserPlus, LogOut, Trash2, Copy, Check, Wifi, Settings, Eye, EyeOff, KeyRound } from "lucide-react"
+import { Sun, Moon, Languages, User, UserPlus, LogOut, Trash2, Copy, Check, Wifi, Settings, Eye, EyeOff, KeyRound, Key } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/contexts/auth-context"
 import { useHeroUIToast } from "@/hooks/use-heroui-toast"
 import { useMailStatus } from "@/contexts/mail-status-context"
 import { SettingsPanel } from "@/components/settings-panel"
+import ChangePasswordModal from "@/components/change-password-modal"
 import { useTranslations, useLocale } from "next-intl"
 
 interface HeaderProps {
@@ -28,6 +29,7 @@ export default function Header({ onCreateAccount, onLocaleChange, onLogin, isMob
   const [copiedPassword, setCopiedPassword] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isChangePwOpen, setIsChangePwOpen] = useState(false)
   const { toast } = useHeroUIToast()
   const { isEnabled, setIsEnabled } = useMailStatus()
   const t = useTranslations("header")
@@ -355,6 +357,9 @@ export default function Header({ onCreateAccount, onLocaleChange, onLogin, isMob
                     >
                       {t("deleteCurrent")}
                     </DropdownItem>
+                    <DropdownItem key="change_password" startContent={<Key size={16} />} onPress={() => setIsChangePwOpen(true)}>
+                      {t("changePassword")}
+                    </DropdownItem>
                   </>
                 ) : (
                   <>
@@ -388,6 +393,11 @@ export default function Header({ onCreateAccount, onLocaleChange, onLogin, isMob
       <SettingsPanel
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={isChangePwOpen}
+        onClose={() => setIsChangePwOpen(false)}
       />
     </header>
   )

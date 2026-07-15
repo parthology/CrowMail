@@ -17,9 +17,10 @@
 - 🔒 **Secure & Reliable** — Self-hosted Rust backend, MySQL-persisted
 - ⚡ **Instant Access** — Anonymous inbox in one click, no signup
 - 🌐 **Multi-language** — English + हिन्दी (Hindi) out of the box, easy to add more
-- 🎨 **Modern UI** — HeroUI + Tailwind, light + dark themes
+- 🎨 **Modern UI** — HeroUI + Tailwind, light + dark themes; email HTML rendered in a sandboxed iframe with links opening in new tabs
 - 🔄 **Real-time Updates** — Mercure SSE push
-- 📧 **Multi-account** — Manage several inboxes in the browser
+- 📧 **Multi-account** — Manage several inboxes in the browser, switch between them from the header dropdown
+- 🔐 **Self-service password change** — users can rotate their inbox password from the account menu
 - 🔧 **Multi-API Provider** — Switch between your CrowMail backend and Mail.tm
 - 🔑 **API Key Support** — Optional key for private domains
 - 🔗 **Open Source** — MIT
@@ -45,8 +46,10 @@ docker run -p 3000:3000 crowmail-frontend
 
 ## 📧 API Documentation
 
-See `/api-docs` in the running instance, or the LLM-friendly plain-text reference at
-`/llm-api-docs.txt`.
+Two forms shipped in the frontend:
+
+- Interactive: `/api-docs` — grouped endpoint list with try-it-out
+- Plain text (LLM-friendly): `/llm-api-docs.txt` — paste to any AI assistant for integration help
 
 ## 🌍 Adding a language
 

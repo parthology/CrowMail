@@ -189,6 +189,10 @@ export default function ApiDocsPage() {
           body: `{\n  "address": "user@crowmail.sbs",\n  "password": "your_password",\n  "expiresIn": 0\n}`,
         },
         { method: "GET", path: "/me", description: t("accountMeDesc"), authType: "required-token" },
+        {
+          method: "PATCH", path: "/accounts/me/password", description: t("accountChangePasswordDesc"), authType: "required-token",
+          body: `{\n  "old_password": "current",\n  "new_password": "new-password-at-least-8-chars"\n}`,
+        },
         { method: "DELETE", path: "/accounts/{id}", description: t("accountDeleteDesc"), authType: "required-token", pathParams: [{ name: "id", value: "" }] },
       ],
     },

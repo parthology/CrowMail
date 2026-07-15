@@ -126,7 +126,7 @@ function MainContent() {
       router.replace(pathname, { locale: newLocale })
     })
     toast({
-      title: newLocale === "en" ? t("switchedToEn") : t("switchedToZh"),
+      title: newLocale === "en" ? t("switchedToEn") : t("switchedToHi"),
       color: "primary",
       variant: "flat",
       icon: <Languages size={16} />

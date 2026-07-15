@@ -747,6 +747,28 @@ export async function deleteMessage(token: string, id: string, providerId?: stri
 }
 
 // Delete an account (JWT Token only) - with automatic token refresh
+export async function changePassword(
+  token: string,
+  oldPassword: string,
+  newPassword: string,
+  providerId?: string,
+): Promise<void> {
+  await retryFetch(async () => {
+    const headers = createHeadersWithToken(token, { "Content-Type": "application/json" }, providerId)
+    const res = await fetchWithTokenRefresh(buildProxyUrl(`/accounts/me/password`), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+    }, providerId)
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(getErrorMessage(res.status, error))
+    }
+    return res
+  })
+}
+
 export async function deleteAccount(token: string, id: string, providerId?: string): Promise<void> {
   const baseUrl = getApiBaseUrlForProvider(providerId)
   let currentToken = token

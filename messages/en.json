@@ -46,7 +46,8 @@
     "loginExisting": "Login Existing Account",
     "accountSwitchFailed": "Account Switch Failed",
     "accountSwitchFailedDesc": "Please try logging in to this account again",
-    "passwordCopied": "Password copied"
+    "passwordCopied": "Password copied",
+    "changePassword": "Change Password"
   },
   "sidebar": {
     "inbox": "Inbox",
@@ -230,7 +231,7 @@
     "checkBanner": "Click avatar to view password. Password cannot be recovered, please save it",
     "createFailed": "Failed to create temporary email",
     "createFailedDesc": "Please try again later or create an account manually.",
-    "switchedToZh": "已切换到中文",
+    "switchedToHi": "Switched to Hindi",
     "switchedToEn": "Switched to English",
     "refreshing": "Refreshing emails...",
     "comingSoon": "Coming soon...",
@@ -338,6 +339,24 @@
     "messageGroup": "Messages",
     "messageListDesc": "Get the list of messages in the inbox.",
     "messageGetDesc": "Get detailed information for a single message by its ID.",
-    "messageDeleteDesc": "Delete a message by its ID."
+    "messageDeleteDesc": "Delete a message by its ID.",
+    "accountChangePasswordDesc": "Change the password of the currently authenticated account. Requires old + new password; new must be at least 8 characters."
+  },
+  "changePasswordModal": {
+    "title": "Change Password",
+    "oldPassword": "Current password",
+    "newPassword": "New password",
+    "newPasswordHint": "At least 8 characters",
+    "confirmPassword": "Confirm new password",
+    "cancel": "Cancel",
+    "submit": "Update password",
+    "fillAllFields": "Please fill in all fields",
+    "newTooShort": "New password must be at least 8 characters",
+    "mismatch": "New passwords don't match",
+    "wrongOld": "Current password is incorrect",
+    "failed": "Failed to change password",
+    "success": "Password changed",
+    "successDesc": "Log in with the new password next time.",
+    "noSession": "No active session; please log in again."
   }
 }

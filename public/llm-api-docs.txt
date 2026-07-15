@@ -1,166 +1,161 @@
-# DuckMail API Reference
-# Base URL: https://api.duckmail.sbs
-# Authentication: Bearer Token or API Key (dk_xxx)
+# CrowMail API Reference
+# Base URL: https://api.crowmail.sbs
+# Authentication: Bearer Token (per-user JWT) or Admin API Key (dk_xxx)
 # This file is designed to be sent to AI assistants for integration help.
 
 ---
 
 ## Authentication
 
-### Bearer Token
+### Bearer Token (per-user)
 Obtain a token via POST /token with email address and password.
 Include in requests: Authorization: Bearer <token>
+Tokens are per-account and expire in 7 days.
 
-### API Key (Optional)
-For private domain access. Obtain from https://domain.duckmail.sbs
+### Admin API Key (server operator)
+Static key configured in server .env (ADMIN_API_KEYS). Grants access to /admin/* endpoints.
 Format: dk_ prefix. Include in requests: Authorization: Bearer dk_xxx
+
+### Inbound Webhook Secret
+Shared secret used by the /admin/inbound-webhook endpoint. Configured on both the CrowMail backend (INBOUND_WEBHOOK_SECRET env var) and the Cloudflare Email Worker (X-Webhook-Secret header). Not a user-facing credential.
 
 ---
 
 ## Endpoints
 
 ### [Domains] GET /domains
-Get available domain list. Returns private domains if API key is provided.
-Auth: Optional (API Key or Bearer Token)
-Query: page (default 1, 30 per page)
+List domains that CrowMail is configured to receive mail for.
+Auth: None
+Query: page (default 1)
 Response:
 {
   "hydra:member": [
     {
       "id": "string",
-      "domain": "example.com",
-      "ownerId": "string | null",
+      "domain": "crowmail.sbs",
       "isVerified": true,
-      "verificationToken": "duckmail-verify-xxx",
-      "createdAt": "2024-01-01T00:00:00Z",
-      "updatedAt": "2024-01-01T00:00:00Z"
+      "ownerId": null,
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
     }
   ],
-  "hydra:totalItems": 10,
-  "hydra:view": {
-    "@id": "/domains?page=1",
-    "@type": "PartialCollectionView",
-    "hydra:first": "/domains?page=1",
-    "hydra:last": "/domains?page=1"
-  }
-}
-Note: Only verified domains are returned. System domains (ownerId=null) are visible to all.
-
-### [Accounts] POST /accounts
-Create a new email account. API key required for private domains.
-Auth: Optional (API Key or Bearer Token)
-Request:
-{
-  "address": "user@duckmail.sbs",
-  "password": "your_password",
-  "expiresIn": 86400
-}
-Fields:
-- address (required): email address. Username (before @) >= 3 chars, domain must be verified.
-- password (required): >= 6 chars.
-- expiresIn (optional, integer, seconds): Account expiry. Omit = 24h auto-cleanup. 0 or -1 = never expires. Positive number = custom expiry in seconds.
-Validation: address must contain @, username (before @) >= 3 chars, password >= 6 chars, domain must be verified.
-Response (201):
-{
-  "id": "string",
-  "address": "user@duckmail.sbs",
-  "authType": "email",
-  "createdAt": "2024-01-01T00:00:00Z",
-  "updatedAt": "2024-01-01T00:00:00Z"
+  "hydra:totalItems": 1
 }
 
 ### [Auth] POST /token
-Get authentication token using email and password.
+Get authentication token using email address and password.
 Auth: None
 Request:
 {
-  "address": "user@duckmail.sbs",
+  "address": "user@crowmail.sbs",
   "password": "your_password"
 }
-Response:
-{
-  "id": "account-id",
-  "token": "eyJhbGc..."
-}
+Response (200):
+{ "id": "account-id", "token": "eyJ..." }
+Errors:
+- 401 Invalid email or password.
 
-### [Accounts] GET /me
-Get current authenticated account info.
-Auth: Required (Bearer Token)
-Response:
+### [Accounts] POST /accounts
+Create a new email account.
+Auth: None
+Request:
+{
+  "address": "user@crowmail.sbs",
+  "password": "your_password",
+  "expiresIn": 0
+}
+Fields:
+- address (required): email under a domain in /domains. Username (before @) >= 3 chars.
+- password (required): >= 6 chars.
+- expiresIn (optional integer seconds): 0 or -1 = never expires; omit = 24h default; >0 = custom expiry.
+Response (201):
 {
   "id": "string",
-  "address": "user@duckmail.sbs",
-  "authType": "email",
-  "createdAt": "2024-01-01T00:00:00Z",
-  "updatedAt": "2024-01-01T00:00:00Z"
+  "address": "user@crowmail.sbs",
+  "quota": 1073741824,
+  "used": 0,
+  "isDisabled": false,
+  "isDeleted": false,
+  "username": "user",
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-01-01T00:00:00Z"
 }
+Errors:
+- 400 Domain not allowed / invalid address / password too short.
+- 409 Address already in use.
+
+### [Accounts] GET /me
+Get the currently authenticated account.
+Auth: Required (Bearer Token)
+Response (200): same shape as POST /accounts response.
 
 ### [Accounts] DELETE /accounts/{id}
-Delete your own account by ID. You can only delete the currently logged-in account.
+Delete your own account by ID. You may only delete the currently logged-in account.
 Auth: Required (Bearer Token)
 Response: 204 No Content
 
-### [Messages] GET /messages
-Get inbox message list (paginated, newest first).
+### [Accounts] PATCH /accounts/me/password
+Change the password of the currently authenticated account.
 Auth: Required (Bearer Token)
-Query: page (default 1, 30 per page)
+Request:
+{
+  "old_password": "current",
+  "new_password": "new-password-at-least-8-chars"
+}
+Response (200): { "ok": true }
+Errors:
+- 400 New password too short (< 8 chars).
+- 401 Invalid password (old_password wrong).
+After a successful change all existing tokens keep working until they expire; recommended to POST /token again to refresh.
+
+### [Messages] GET /messages
+Get inbox message list (paginated, newest first). List view omits full body.
+Auth: Required (Bearer Token)
+Query: page (default 1)
 Response:
 {
   "hydra:member": [
     {
       "id": "string",
-      "msgid": "string",
       "accountId": "string",
+      "msgid": "string",
       "from": { "name": "Sender", "address": "sender@example.com" },
-      "to": [{ "name": "You", "address": "you@duckmail.sbs" }],
+      "to": [ { "name": "You", "address": "you@crowmail.sbs" } ],
       "subject": "Email Subject",
+      "intro": "First ~200 chars of body...",
       "seen": false,
       "isDeleted": false,
       "hasAttachments": false,
       "size": 1024,
-      "downloadUrl": "/serve/mailbox/...",
-      "createdAt": "2024-01-01T00:00:00Z",
-      "updatedAt": "2024-01-01T00:00:00Z"
+      "downloadUrl": "https://api.crowmail.sbs/sources/<id>",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-01-01T00:00:00Z"
     }
   ],
-  "hydra:totalItems": 5,
-  "hydra:view": { ... }
+  "hydra:totalItems": 5
 }
-Note: List view does not include text/html body content.
 
 ### [Messages] GET /messages/{id}
-Get full message details including body and attachments.
+Get full message details including HTML/text body.
 Auth: Required (Bearer Token)
-Response:
+Response (200):
 {
   "id": "string",
-  "msgid": "string",
   "accountId": "string",
   "from": { "name": "Sender", "address": "sender@example.com" },
-  "to": [{ "name": "You", "address": "you@duckmail.sbs" }],
+  "to": [ { "name": "You", "address": "you@crowmail.sbs" } ],
   "subject": "Email Subject",
   "text": "Plain text body",
-  "html": ["<html>...</html>"],
+  "html": [ "<html>...</html>" ],
   "seen": false,
   "isDeleted": false,
-  "hasAttachments": true,
+  "hasAttachments": false,
   "size": 2048,
-  "downloadUrl": "/serve/mailbox/...",
-  "attachments": [
-    {
-      "id": "0",
-      "filename": "document.pdf",
-      "contentType": "application/pdf",
-      "disposition": "attachment",
-      "transferEncoding": "",
-      "related": false,
-      "size": 1024,
-      "downloadUrl": "/serve/mailbox/.../attach/0/document.pdf"
-    }
-  ],
-  "createdAt": "2024-01-01T00:00:00Z",
-  "updatedAt": "2024-01-01T00:00:00Z"
+  "downloadUrl": "https://api.crowmail.sbs/sources/<id>",
+  "createdAt": "...",
+  "updatedAt": "..."
 }
+Errors: 404 if message not found or belongs to another account.
 
 ### [Messages] PATCH /messages/{id}
 Mark a message as read.
@@ -168,19 +163,50 @@ Auth: Required (Bearer Token)
 Response: { "seen": true }
 
 ### [Messages] DELETE /messages/{id}
-Delete a message by ID.
+Soft-delete a message (sets is_deleted=1; nightly cron hard-purges).
 Auth: Required (Bearer Token)
 Response: 204 No Content
 
 ### [Messages] GET /sources/{id}
-Get raw email source (RFC 822 format).
+Get raw RFC-822 message source.
 Auth: Required (Bearer Token)
-Response:
+Response: message/rfc822 body.
+
+---
+
+## Admin / operator endpoints
+
+### [Admin] POST /admin/inbound-webhook
+Accept an already-received email from a trusted forwarder (Cloudflare Email Worker in the reference deployment). Bypasses SMTP.
+Auth: X-Webhook-Secret header matching INBOUND_WEBHOOK_SECRET env var.
+Request:
 {
-  "id": "string",
-  "downloadUrl": "/serve/mailbox/.../source",
-  "data": "From: sender@example.com\nTo: ..."
+  "to": "recipient@crowmail.sbs",
+  "from_address": "noreply@discord.com",
+  "from_name": "Discord",
+  "subject": "Verify your email",
+  "html": "<html>...</html>",
+  "text": "plain body",
+  "raw": "<full RFC-822 source>"
 }
+Behavior:
+- to must be under an allowed domain.
+- Account is auto-provisioned if it does not yet exist (temp-mail semantics).
+- If subject/html/text are empty, the backend parses `raw` to extract them (via mail-parser).
+- SPF/DKIM/DMARC checks are skipped (Cloudflare validates before invoking the Worker).
+Response (200): { "ok": true, "message_id": "<uuid>" }
+Errors:
+- 400 unknown domain / invalid recipient / mailbox full.
+- 401 Missing or wrong X-Webhook-Secret.
+
+---
+
+## Real-time updates (SSE)
+
+Server-sent events for new-message notifications:
+GET /events?topic=/accounts/{id}
+Auth: Bearer Token in Authorization header OR ?token=... query.
+Emits JSON events on new mail; use as replacement for polling.
 
 ---
 
@@ -188,44 +214,48 @@ Response:
 
 {
   "error": "Error Type",
-  "message": "Detailed error message"
+  "message": "Detailed error message",
+  "detail": "Same as message in most cases"
 }
 
 Status codes:
-- 400: Bad Request (invalid format)
-- 401: Unauthorized (missing or invalid token)
-- 403: Forbidden (no permission)
-- 404: Not Found
-- 409: Conflict (e.g. email address already exists)
-- 422: Unprocessable Entity (validation failed)
-- 500: Internal Server Error
+- 400 Bad Request (invalid body / domain not allowed / password too short)
+- 401 Unauthorized (missing/wrong token or wrong password)
+- 403 Forbidden (deleting another user's data)
+- 404 Not Found
+- 409 Conflict (address already in use)
+- 429 Too Many Requests (rate limit)
+- 500 Internal Server Error
+
+Rate limit: RATE_LIMIT_QPS per source IP (default 100 in the reference deployment).
 
 ---
 
 ## Quick Start Example
 
 # 1. Create account (expiresIn: omit=24h, 0/-1=never, >0=custom seconds)
-curl -X POST https://api.duckmail.sbs/accounts \
+curl -X POST https://api.crowmail.sbs/accounts \
   -H "Content-Type: application/json" \
-  -d '{"address": "test@duckmail.sbs", "password": "mypassword", "expiresIn": 0}'
+  -d '{"address":"test@crowmail.sbs","password":"MyPassword1!","expiresIn":0}'
 
 # 2. Get token
-curl -X POST https://api.duckmail.sbs/token \
+TOKEN=$(curl -s -X POST https://api.crowmail.sbs/token \
   -H "Content-Type: application/json" \
-  -d '{"address": "test@duckmail.sbs", "password": "mypassword"}'
+  -d '{"address":"test@crowmail.sbs","password":"MyPassword1!"}' | jq -r .token)
 
-# 3. Read messages
-curl https://api.duckmail.sbs/messages \
-  -H "Authorization: Bearer <your_token>"
+# 3. Read inbox
+curl https://api.crowmail.sbs/messages -H "Authorization: Bearer $TOKEN"
 
-# 4. Get message detail
-curl https://api.duckmail.sbs/messages/<message_id> \
-  -H "Authorization: Bearer <your_token>"
+# 4. Get one mail's HTML body
+curl https://api.crowmail.sbs/messages/<id> -H "Authorization: Bearer $TOKEN"
 
-# 5. Mark message as read
-curl -X PATCH https://api.duckmail.sbs/messages/<message_id> \
-  -H "Authorization: Bearer <your_token>"
+# 5. Change password
+curl -X PATCH https://api.crowmail.sbs/accounts/me/password \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"old_password":"MyPassword1!","new_password":"NewPass1234!"}'
 
-# 6. Get domains (with API key for private domains)
-curl https://api.duckmail.sbs/domains \
-  -H "Authorization: Bearer dk_your_api_key"
+# 6. Delete account
+ACCOUNT_ID=$(curl -s https://api.crowmail.sbs/me -H "Authorization: Bearer $TOKEN" | jq -r .id)
+curl -X DELETE "https://api.crowmail.sbs/accounts/$ACCOUNT_ID" \
+  -H "Authorization: Bearer $TOKEN"
